@@ -112,7 +112,7 @@ perPDFNGATK <- PDFNGATK$V4
 
 boxplot(perPDFNGATK, perPDFNSamtools, perPDFNFreeB, xaxs = NULL, col = '#990000', ylab = 'Ratio of false negatives to total numer of variants')
 axis(1, at = 1:3, c('GATK', 'Samtools', 'FreeB'))
-dev.copy(pdf, 'falseNegaties.pdf')
+dev.copy(pdf, 'falseNegatives.pdf')
 dev.off()
 
 
