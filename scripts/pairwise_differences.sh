@@ -1,7 +1,7 @@
 #!/bin/bash
 ### CALCULATES PAIRWISE DIFFERENCES BETWEEN VCF FILES.
 
-### SORTING and FILTERING for biallelic SNPs in original SNPs - THIS NEEDS TO BE DONE FOR BOTH POPULATIONS ###
+### SORTING and FILTERING for biallelic SNPs in original SNPs - THIS NEEDS TO BE DONE FOR BOTH POPULATIONS ### 
 
 # create list of all vcf-files
 ls *vcf.gz > list_individuals
