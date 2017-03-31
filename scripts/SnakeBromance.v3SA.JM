@@ -51,8 +51,19 @@ BaseName_REF = "/home/Evop/Z_test_pipe/Data/Ref_ChrEven"
 
 rule all:
     input: 
-#       expand("0.MapData/{sample}.realn.bam",sample=SAMPLES)
-        "GVCF/SNPcall_Bcftools.vcf"
+#       expand("MapData/{sample}.realn.bam",sample=SAMPLES)
+        "GVCF/SNPcall_Bcftools.vcf" ,
+        "GVCF/SNPcall_GATK_filtered.vcf"
+        "GVCF/SNPcall_Samtools_filtered.vcf.gz" ,
+        "/GVCF/SNPcall_FreeBayes.vcf" ,
+        "GVCF/SNPcall_FreeBayes_filtered.vcf" ,
+        "{BaseName_REF}.bwt" ,
+        "0.MapData/{sample}.sort.bam.bai" ,
+        "0.MapData/{sample}.rgmdup.bam.bai" ,
+        "1.Statistics/{sample}.flag.txt" ,
+        "1.1.Statistics/{sample}.idx.txt" ,
+        "0.MapData/{sample}.realn.bam.bai" ,
+        "0.MapData/{sample}.recalibraed.bam.bai"	
 
 
 ##-----------------------------------------------##
@@ -280,19 +291,19 @@ rule PASS_SNPs_Filtering_VCF:
         "GVCF/All_HF_SNPsPASS_GATK.vcf"
     message:"calling variants for realigned bam files with the GATK pipeline SSSSSsssssSSSSSssSsSSSSsnaake it Baby Bromance"
     shell:
-	    "{vcftools} --vcf {input} --remove-indels --remove-filtered-all --recode --recode-INFO-all --out {output}"
+        "{vcftools} --vcf {input} --remove-indels --remove-filtered-all --recode --recode-INFO-all --out {output}"
 
 rule GATK_recalibration_VCF:
     input:
         vcf = "GVCF/All_GATK.vcf" ,
-	    SNPdb = "GVCF/All_HF_SNPsPASS_GATK.vcf"	
+	SNPdb = "GVCF/All_HF_SNPsPASS_GATK.vcf"	
     output:
         recal = "GVCF/recalibrate_SNP.recal" ,
-	    tranches = "GVCF/recalibrate_SNP.tranches" ,
-	    rscript = "GVCF/recalibrate_SNP_plots.R"
+	tranches = "GVCF/recalibrate_SNP.tranches" ,
+	rscript = "GVCF/recalibrate_SNP_plots.R"
     message:"calling variants for realigned bam files with the GATK pipeline SSSSSsssssSSSSSssSsSSSSsnaake it Baby Bromance"
     shell:
-	    "{JAVA_1_8} -Xmx5g -d64 -jar {GATK} -T VariantRecalibrator -R {REF} -input {input.vcf} - resource:HARD,known=false,training=true,truth=true,prior=10.0 {input.SNPdb} -an DP -an QD -an FS -an MQRankSum -an ReadPosRankSum -mode SNP -tranche 100.0 -tranche 99.9 -tranche 99.0 -tranche 90.0 -recalFile {output.recal} -tranchesFile {output.tranches} -rscriptFile {output.rscript}"
+        "{JAVA_1_8} -Xmx5g -d64 -jar {GATK} -T VariantRecalibrator -R {REF} -input {input.vcf} - resource:HARD,known=false,training=true,truth=true,prior=10.0 {input.SNPdb} -an DP -an QD -an FS -an MQRankSum -an ReadPosRankSum -mode SNP -tranche 100.0 -tranche 99.9 -tranche 99.0 -tranche 90.0 -recalFile {output.recal} -tranchesFile {output.tranches} -rscriptFile {output.rscript}"
 
 ## NEED HELP WHY SO MANY BRANCHES ?
 
@@ -306,7 +317,7 @@ rule GATK_apply_recalibration_VCF:
         "GVCF/SNPcall_GATK_recalibrated.vcf"
     message:"calling variants for realigned bam files with the GATK pipeline SSSSSsssssSSSSSssSsSSSSsnaake it Baby Bromance"
     shell:
-	    "{JAVA_1_8} -jar {GATK} -T ApplyRecalibration -R {REF} -input {input.vcf} -mode SNP --ts_filter_level 90 -recalFile {input.recal} -tranchesFile {input.tranches} -rscriptFile {input.rscript} -o {output}"
+        "{JAVA_1_8} -jar {GATK} -T ApplyRecalibration -R {REF} -input {input.vcf} -mode SNP --ts_filter_level 90 -recalFile {input.recal} -tranchesFile {input.tranches} -rscriptFile {input.rscript} -o {output}"
 
 
 rule PASS_SNPs_Final_Filtering_VCF:
@@ -316,7 +327,7 @@ rule PASS_SNPs_Final_Filtering_VCF:
         "GVCF/SNPcall_GATK_filtered.vcf"
     message:"calling variants for realigned bam files with the GATK pipeline SSSSSsssssSSSSSssSsSSSSsnaake it Baby Bromance"
     shell:
-	    "{vcftools} --vcf {input} --remove-indels --remove-filtered-all --recode --recode-INFO-all --out {output}"
+        "{vcftools} --vcf {input} --remove-indels --remove-filtered-all --recode --recode-INFO-all --out {output}"
 
 ##Samtools
 
@@ -331,62 +342,62 @@ rule samtools_call:
 
 rule tabix_prepare:
     input:
-	    "GVCF/SNPcall_Samtools.vcf.gz"
+        "GVCF/SNPcall_Samtools.vcf.gz"
     output:
         "GVCF/SNPcall_Samtools.vcf.gz.idx"
     shell:
-	    "{tabix} -p vcf {input}"
+        "{tabix} -p vcf {input}"
 
 ## HERE why not just add the pipe to the previous line ?
 
 rule bcftools_stats:
     input:
-	    vcf = "GVCF/SNPcall_Samtools.vcf.gz" ,
-	    ref = "{REF}"
+        vcf = "GVCF/SNPcall_Samtools.vcf.gz" ,
+	ref = "{REF}"
     output:
         "GVCF/SNPcall_Samtools.vcf.gz.stats"
     shell:
-	    "{BCFTOOLS} stats -F {input.ref} -s - {input.vcf} > {output}"
+        "{BCFTOOLS} stats -F {input.ref} -s - {input.vcf} > {output}"
 
 rule bcftools_plots:
     input:
-	    vcf = "GVCF/SNPcall_Samtools.vcf.gz.stats"
+         vcf = "GVCF/SNPcall_Samtools.vcf.gz.stats"
     output:
         "plots/plots" #I don't know what will be the output
     shell:
-	    "{plot} -p plots/ {input} > {output}"
+        "{plot} -p plots/ {input} > {output}"
 
 rule bcftools_filter_ST:
     input:
-	    "GVCF/SNPcall_Samtools.vcf.gz"
+        "GVCF/SNPcall_Samtools.vcf.gz"
     output:
         "GVCF/SNPcall_Samtools_filtered.vcf.gz"
     shell:
-	    "{BCFTOOLS} filter -O z -o {output} -s LOWQUAL -i '%QUAL>10' {input}"
+        "{BCFTOOLS} filter -O z -o {output} -s LOWQUAL -i '%QUAL>10' {input}"
 
 
 ##FreeBayes
 
 rule FREE_BAYES:
     input:
-	    expand("0.MapData/{sample}.recalibrated.bam", sample=SAMPLES) ,
+	expand("0.MapData/{sample}.recalibrated.bam", sample=SAMPLES)
         #"bam_file_list.txt"   ## Should be a list with the bam localization and names! I don't know which is the best option, could be create a rule to list all the recalibrated files!     
     output:
-        "/GVCF/SNPcall_FreeBayes.vcf"
+        "GVCF/SNPcall_FreeBayes.vcf"
     message:"calling variants Free Bayes Bad Bromance "
     shell:
         "ls -1 {input} | {FREE} -L  -f {REF} -v {output}"
 
 rule bcftools_filter_FB:
     input:
-	    "GVCF/SNPcall_FreeBayes.vcf"
+        "GVCF/SNPcall_FreeBayes.vcf"
     output:
         "GVCF/SNPcall_FreeBayes_filtered.vcf"
     shell:
-	    "{vcffilter} -f \"QUAL > 1 & QUAL / AO > 10 & SAF > 0 & SAR > 0 & RPR > 1 & RPL > 1\" {input} > {output} "
+        "{vcffilter} -f \"QUAL > 1 & QUAL / AO > 10 & SAF > 0 & SAR > 0 & RPR > 1 & RPL > 1\" {input} > {output} "
 
 ## Quality Metrics on variants
-# Ti/Tv Ratio (2.1 for WGS ~2.8 for exome)
+# Tiv Ratio (2.1 for WGS ~2.8 for exome)
 # HapMap concordance
 # SNV/Indel Counts
 # Rare variant enrichment
