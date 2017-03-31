@@ -295,7 +295,7 @@ rule PASS_SNPs_Filtering_VCF:
 
 rule GATK_recalibration_VCF:
     input:
-        vcf = "GVCF/All_GATK.recode.vcf" ,
+        vcf = "GVCF/All_GATK.vcf" ,
 	SNPdb = "GVCF/All_HF_SNPsPASS_GATK.recode.vcf"	
     output:
         recal = "GVCF/recalibrate_SNP.recal" ,
