@@ -288,15 +288,15 @@ rule PASS_SNPs_Filtering_VCF:
     input:
         "GVCF/All_HF_GATK.vcf"
     output:
-        "GVCF/All_HF_SNPsPASS_GATK.vcf"
+        "GVCF/All_HF_SNPsPASS_GATK.recode.vcf"
     message:"calling variants for realigned bam files with the GATK pipeline SSSSSsssssSSSSSssSsSSSSsnaake it Baby Bromance"
     shell:
         "{vcftools} --vcf {input} --remove-indels --remove-filtered-all --recode --recode-INFO-all --out {output}"
 
 rule GATK_recalibration_VCF:
     input:
-        vcf = "GVCF/All_GATK.vcf" ,
-	SNPdb = "GVCF/All_HF_SNPsPASS_GATK.vcf"	
+        vcf = "GVCF/All_GATK.recode.vcf" ,
+	SNPdb = "GVCF/All_HF_SNPsPASS_GATK.recode.vcf"	
     output:
         recal = "GVCF/recalibrate_SNP.recal" ,
 	tranches = "GVCF/recalibrate_SNP.tranches" ,
@@ -324,7 +324,7 @@ rule PASS_SNPs_Final_Filtering_VCF:
     input:
         "GVCF/SNPcall_GATK_recalibrated.vcf"
     output:
-        "GVCF/SNPcall_GATK_filtered.vcf"
+        "GVCF/SNPcall_GATK_filtered.recode.vcf"
     message:"calling variants for realigned bam files with the GATK pipeline SSSSSsssssSSSSSssSsSSSSsnaake it Baby Bromance"
     shell:
         "{vcftools} --vcf {input} --remove-indels --remove-filtered-all --recode --recode-INFO-all --out {output}"
