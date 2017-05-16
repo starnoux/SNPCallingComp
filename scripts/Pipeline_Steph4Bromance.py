@@ -87,7 +87,7 @@ if os.path.isfile(args.ref):
 ###################
 
 #alignment
-try_except("paired end mapping for ...", "parallel --gnu -j"+str(args.t)+" '"+args.bwa+" mem -M -t8 "+args.ref+" {} $(echo {} | sed 's/1.fastq/2.fastq/') > "+args.map+"$(echo $(basename {}) | sed 's/paired_//' | sed 's/1.fastq/.sam/')' ::: "+args.i+"paired_"+args.pr+"*1.fastq")
+try_except("Alignment for ...", "parallel --gnu -j"+str(args.t)+" '"+args.bwa+" mem -M -t8 "+args.ref+" {} $(echo {} | sed 's/1.fastq/2.fastq/') > "+args.map+"$(echo $(basename {})| sed 's/1.fastq/.sam/')' ::: "+args.i+args.pr+"*1.fastq")
 
 #conversion from sam to bam
 try_except("converting sam files to bam files ...","parallel --gnu -j"+str(args.t)+" '"+args.samtools+" view -bS {} > $(echo {} | sed 's/.sam/.bam/')' ::: "+args.map+args.pr+"*.sam")
