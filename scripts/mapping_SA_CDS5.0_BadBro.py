@@ -155,7 +155,7 @@ try_except("create HARD+MAF filtered vcf",args.vcftools+" --vcf "+args.o+args.pr
 try_except("Base Recalibration ...","parallel --gnu -j"+str(args.t)+" 'java_1.8 -Xmx"+args.mem+" -jar "+args.gatk+" -T BaseRecalibrator -nct 12 -I {} --knownSites "+args.o+args.pr+"_realn.filtered.snps.vcf.recode.vcf -R "+args.ref+" -o $(echo {} | sed 's/.rmdup.realn.bam/.recal.data.table/')' ::: "+args.rg+"rg_*.rmdup.realn.bam")
 
 #Print Reads (GATK Report Recalibration)
-try_except("Generating printreads file for .realn.bam files ...","parallel --gnu -j"+str(args.t)+" 'java_1.8 -Xmx"+args.mem+" -jar "+args.gatk+" -T PrintReads -nct 12 -I {} -BQSR $(echo {} | sed 's/.rmdup.realn.bam/.recal.data.table/') -R "+args.ref+" -o $(echo {} | sed 's/.rmdup.realn.bam/.recal.bam/')' ::: "+args.rg+"rg_*.rmdup.realn.bam")
+try_except("Generating printreads file for .realn.bam files ...","parallel --gnu -j"+str(args.t)+" 'java_1.8 -Xmx"+args.mem+" -jar "+args.gatk+" -T PrintReads -nct 12 -I {} -BQSR $(echo {} | sed 's/.rmdup.realn.bam/.recal.data.table/') -R "+args.ref+" -o $(echo {} | sed 's/.rmdup.realn.bam/.recal.bam/.recal.bam/')' ::: "+args.rg+"rg_*.rmdup.realn.bam")
 
 #bam index generation
 try_except("generating index for recal.bam files ...","parallel --gnu -j"+str(args.t)+" '"+args.samtools+" index {}' ::: "+args.rg+"*.recal.bam")
@@ -163,9 +163,27 @@ try_except("generating index for recal.bam files ...","parallel --gnu -j"+str(ar
 #calling variants for realigned bam files
 try_except("calling variants for realigned bam files ...","parallel --gnu -j"+str(args.t)+" 'java_1.8 -Xmx"+args.mem+" -jar "+args.gatk+" -T HaplotypeCaller -R "+args.ref+" -I {} -ERC GVCF   -variant_index_type LINEAR -variant_index_parameter 128000 -stand_emit_conf 20 -stand_call_conf 20 -o "+args.o+"$(echo $(basename {}) | sed 's/.recal.bam/.3.1.gvcf/') ' ::: "+args.rg+"rg_"+args.pr+"*recal.bam")
 
+############################################################
+############### Haplotype Caller "pr"+_BaseCalibrated_HC.vcf
+############################################################
 #Generation of a list of final files :D
 try_except("Generation of a list of files","ls "+args.o+"*.3.1.gvcf > "+args.o+args.pr+"_BaseCalibrated_ReadyToUse.list")
 
-#Generation of gvcf of good quality
-try_except("create vcf from gvcf files","parallel --gnu -j"+str(args.t)+" 'java_1.8 -Xmx"+args.mem+" -jar "+args.gatk+" -T GenotypeGVCFs -R "+args.ref+" -V {} -o "+args.o+"$(echo $(basename {}) | sed 's/_ReadyToUse.list/.vcf/') ' ::: "+args.o+args.pr+"_BaseCalibrated_ReadyToUse.list")
+#Generation of a vcf of good quality & base
+try_except("create vcf from gvcf files","parallel --gnu -j"+str(args.t)+" 'java_1.8 -Xmx"+args.mem+" -jar "+args.gatk+" -T GenotypeGVCFs -R "+args.ref+" -V {} -o "+args.o+"$(echo $(basename {}) | sed 's/_ReadyToUse.list/_HC.vcf/') ' ::: "+args.o+args.pr+"_BaseCalibrated_ReadyToUse.list")
 
+############################################################
+############### List of BEASE RECAL BAM files
+############################################################
+#Generation of a list of BAM files :D
+try_except("Generation of a list of files","ls "+args.rg+"*.recal.bam > "+args.rg+args.pr+"_BaseCalibrated_BAM.list")
+
+############################################################
+############### Samtools Caller
+############################################################
+#calling variants for recalibrated bam files : Samtools Caller
+try_except("calling variants for recalibrated bam files with samtools...","parallel --gnu -j"+str(args.t)+" '"+args.samtools+" mpileup -ugf "+args.ref+" -b {} | bcftools call -vmO z -o "+args.o+"$(echo $(basename {}) | sed 's/_ReadyToUse.list/.SAM.vcf.gz/')  ' ::: "+args.rg+args.pr+"_BaseCalibrated_BAM.list")
+
+############################################################
+############### FreeBayes Caller
+############################################################
