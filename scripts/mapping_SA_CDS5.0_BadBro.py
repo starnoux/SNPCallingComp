@@ -75,51 +75,51 @@ if not os.path.exists(args.o):
 #Creating index if one of the file of the index is missing
 if os.path.isfile(args.ref):
     if not (os.path.isfile(args.ref+".amb") and os.path.isfile(args.ref+".ann") and os.path.isfile(args.ref+".bwt") and os.path.isfile(args.ref+".pac") and os.path.isfile(args.ref+".sa")):
-    	try_except("creating bwa index files for "+args.ref+" ...",args.bwa+" index "+args.ref)
+      try_except("creating bwa index files for "+args.ref+" ...",args.bwa+" index "+args.ref)
         if not os.path.isfile(args.ref+".fai") :
-                try_except("creating samtools index files for "+args.ref+" ...","samtools faidx "+args.ref)
+          try_except("creating samtools index files for "+args.ref+" ...","samtools faidx "+args.ref)
     elif not (os.path.isfile(args.refname+".dict")):
-        try_except("generating picard index for "+args.refname+" ...","java_1.8 -Xmx"+args.mem+" -jar "+args.picard+" CreateSequenceDictionary R="+args.ref+"  O="+args.refname+".dict")
+      try_except("generating picard index for "+args.refname+" ...","java_1.8 -Xmx"+args.mem+" -jar "+args.picard+" CreateSequenceDictionary R="+args.ref+"  O="+args.refname+".dict")
 
 ###################
 #   Instructions  #
 ###################
 
 #alignment
-#try_except("paired end mapping for ...", "parallel --gnu -j"+str(args.t)+" '"+args.bwa+" mem -M -t8 "+args.ref+" {} $(echo {} | sed 's/1.fastq/2.fastq/') > "+args.map+"$(echo $(basename {}) | sed 's/1.fastq/.sam/')' ::: "+args.i+args.pr+"*1.fastq")
+try_except("paired end mapping for ...", "parallel --gnu -j"+str(args.t)+" '"+args.bwa+" mem -M -t8 "+args.ref+" {} $(echo {} | sed 's/1.fastq/2.fastq/') > "+args.map+"$(echo $(basename {}) | sed 's/1.fastq/.sam/')' ::: "+args.i+args.pr+"*1.fastq")
 
 #conversion from sam to bam
-#try_except("converting sam files to bam files ...","parallel --gnu -j"+str(args.t)+" 'samtools view -bS {} > $(echo {} | sed 's/.sam/.bam/')' ::: "+args.map+args.pr+"*.sam")
+try_except("converting sam files to bam files ...","parallel --gnu -j"+str(args.t)+" 'samtools view -bS {} > $(echo {} | sed 's/.sam/.bam/')' ::: "+args.map+args.pr+"*.sam")
 
 #sam removal
-#try_except("removing sam files ...","parallel --gnu -j"+str(args.t)+" 'rm -f {}' ::: "+args.map+args.pr+"*.sam")
+try_except("removing sam files ...","parallel --gnu -j"+str(args.t)+" 'rm -f {}' ::: "+args.map+args.pr+"*.sam")
 
 #sort bam
-#try_except("sorting bam files ...","parallel --gnu -j"+str(args.t)+" '"+args.samtools+" sort {} "+args.map+"sorted_$(basename {} | sed 's/.bam//')' ::: "+args.map+args.pr+"*.bam")
+try_except("sorting bam files ...","parallel --gnu -j"+str(args.t)+" '"+args.samtools+" sort {} "+args.map+"sorted_$(basename {} | sed 's/.bam//')' ::: "+args.map+args.pr+"*.bam")
 
 #read groups replacement
-#try_except("replacing reads groups for sorted bam files ...","parallel --gnu -j"+str(args.t)+" 'java_1.8 -Xmx"+args.mem+" -jar "+args.picard+" AddOrReplaceReadGroups I={} O=$(echo {} | sed 's/sorted_/rg_/') RGSM=$(echo $(basename {})) RGLB=Solution RGPL=illumina RGPU=none VALIDATION_STRINGENCY=LENIENT' ::: "+args.map+"sorted_*.bam")
+try_except("replacing reads groups for sorted bam files ...","parallel --gnu -j"+str(args.t)+" 'java_1.8 -Xmx"+args.mem+" -jar "+args.picard+" AddOrReplaceReadGroups I={} O=$(echo {} | sed 's/sorted_/rg_/') RGSM=$(echo $(basename {})) RGLB=Solution RGPL=illumina RGPU=none VALIDATION_STRINGENCY=LENIENT' ::: "+args.map+"sorted_*.bam")
 
 #sorted bam removal
-#try_except("removing sorted bam files...","parallel --gnu -j"+str(args.t)+" 'rm -f {}' ::: "+args.map+"sorted_*.bam")
+try_except("removing sorted bam files...","parallel --gnu -j"+str(args.t)+" 'rm -f {}' ::: "+args.map+"sorted_*.bam")
 
 #Move the rg_ files to the /rg_files/ folder
-#try_except("moving rg bam files...","parallel --gnu -j"+str(args.t)+" 'mv -f {} "+args.map+"rg_files/$(echo $(basename {}))' ::: "+args.map+"rg_*.bam")
+try_except("moving rg bam files...","parallel --gnu -j"+str(args.t)+" 'mv -f {} "+args.map+"rg_files/$(echo $(basename {}))' ::: "+args.map+"rg_*.bam")
 
 #bam index generation
-#try_except("generating index for rg bam files ...","parallel --gnu -j"+str(args.t)+" '"+args.samtools+" index {}' ::: "+args.rg+"rg_*.bam")
+try_except("generating index for rg bam files ...","parallel --gnu -j"+str(args.t)+" '"+args.samtools+" index {}' ::: "+args.rg+"rg_*.bam")
 
 #Mark duplicates
-#try_except("generating metrics statistics for rg bam files and rmdup.bam files...","parallel --gnu -j"+str(args.t)+" 'java_1.8 -Xmx"+args.mem+" -jar "+args.picard+" MarkDuplicates I={} O=$(echo {} | sed 's/.bam/.rmdup.bam/') METRICS_FILE=$(echo {} | sed 's/.bam/.metrics/') MAX_FILE_HANDLES_FOR_READ_ENDS_MAP=1000 ' ::: "+args.rg+"rg_*.bam")
+try_except("generating metrics statistics for rg bam files and rmdup.bam files...","parallel --gnu -j"+str(args.t)+" 'java_1.8 -Xmx"+args.mem+" -jar "+args.picard+" MarkDuplicates I={} O=$(echo {} | sed 's/.bam/.rmdup.bam/') METRICS_FILE=$(echo {} | sed 's/.bam/.metrics/') MAX_FILE_HANDLES_FOR_READ_ENDS_MAP=1000 ' ::: "+args.rg+"rg_*.bam")
 
 #rmdup.bam index generation
-#try_except("generating index for rmdup files...","parallel --gnu -j"+str(args.t)+" 'java_1.8 -Xmx"+args.mem+" -jar "+args.picard+" BuildBamIndex I={} ' ::: "+args.rg+"rg_"+args.pr+"*.rmdup.bam")
+try_except("generating index for rmdup files...","parallel --gnu -j"+str(args.t)+" 'java_1.8 -Xmx"+args.mem+" -jar "+args.picard+" BuildBamIndex I={} ' ::: "+args.rg+"rg_"+args.pr+"*.rmdup.bam")
 
 #idx statistics generation
-#try_except("generating idx statistics for rg bam files ...","parallel --gnu -j"+str(args.t)+" 'samtools idxstats {} > "+args.map+"statistics/$(echo $(basename {}) | sed 's/rg_/idx_/' | sed 's/.bam/.txt/')' ::: "+args.rg+"rg_*rmdup.bam")
+try_except("generating idx statistics for rg bam files ...","parallel --gnu -j"+str(args.t)+" 'samtools idxstats {} > "+args.map+"statistics/$(echo $(basename {}) | sed 's/rg_/idx_/' | sed 's/.bam/.txt/')' ::: "+args.rg+"rg_*rmdup.bam")
 
 #flag statistics generation
-#try_except("generating flag statistics for rg bam files ...","parallel --gnu -j"+str(args.t)+" 'samtools flagstat {} > "+args.map+"statistics/$(echo $(basename {}) | sed 's/rg_/flag_/' | sed 's/.bam/.txt/')' ::: "+args.rg+"rg_*rmdup.bam")
+try_except("generating flag statistics for rg bam files ...","parallel --gnu -j"+str(args.t)+" 'samtools flagstat {} > "+args.map+"statistics/$(echo $(basename {}) | sed 's/rg_/flag_/' | sed 's/.bam/.txt/')' ::: "+args.rg+"rg_*rmdup.bam")
 
 #intervals generation
 try_except("generating intervals file for rg bam files ...","parallel --gnu -j"+str(args.t)+" 'java_1.8 -Xmx"+args.mem+" -jar "+args.gatk+" -T RealignerTargetCreator -R "+args.ref+" -o $(echo {} | sed 's/.bam/.intervals/') -I {}' ::: "+args.rg+"rg_"+args.pr+"*.rmdup.bam")
@@ -128,7 +128,7 @@ try_except("generating intervals file for rg bam files ...","parallel --gnu -j"+
 try_except("realigning rg bam files ...","parallel --gnu -j"+str(args.t)+" 'java_1.8 -Xmx"+args.mem+" -jar "+args.gatk+" -T IndelRealigner -R "+args.ref+" -targetIntervals $(echo {} | sed 's/.bam/.intervals/') -o "+os.getcwd()+"/$(echo {} | sed 's/.rmdup.bam/.rmdup.realn.bam/') -I {} -maxReads 100000' ::: "+args.rg+"rg_"+args.pr+"*.rmdup.bam")
 
 #removing intervals
-#try_except("removing intervals ...","parallel --gnu -j"+str(args.t)+" 'rm -f {}' ::: "+args.rg+"rg_*.intervals")
+try_except("removing intervals ...","parallel --gnu -j"+str(args.t)+" 'rm -f {}' ::: "+args.rg+"rg_*.intervals")
 
 #removing rg bam files
 #try_except("removing rg bam files ...","parallel --gnu -j"+str(args.t)+" 'rm -f {}' ::: "+args.rg+"rg_*.bam")
